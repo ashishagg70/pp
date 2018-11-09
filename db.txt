@@ -1,0 +1,27 @@
+drop table simdetails;
+drop table simOffers;
+create table simdetails(simId int primary key,serviceNumber int,simNumber bigint,simStatus varchar(20));
+insert into simdetails values(1,1234567891,1234567891234,'active');
+insert into simdetails values(2,1234567892,1234567891235,'inactive');
+
+create table simOffers(offerId int primary key,callQty int,cost int,dataQty int,duration int,offerName varchar(30),simId int 
+,constraint fk_offer foreign key(simId) references simdetails(simId));
+insert into simOffers values(1,100,100,120,10,'free calls and data',1);
+insert into simOffers values(2,150,50,100,15,'free calls',2);
+
+create table customerAddress(addressId int primary key,address varchar(30),city varchar(30),pincode int,state varchar(30) );
+insert into customerAddress values(1,'Jayanagar','Bangalore',560031,'Karnatka');
+insert into customerAddress values(2,'Vijaynagar','Mysore',567031,'Karnatka');
+
+create table customerIdentity(uniqueIdNumber bigint primary key,dateOfBirth date,firstName varchar(30),lastName varchar(30),emailAddress varchar(50),state varchar(30));
+insert into customerIdentity values(1234567891234567,'1990-12-12','smith','john','smith@gmail.com','Karnatka');
+insert into customerIdentity values(1234567891234568,'1998-12-12','bob','sam','bob@gmail.com','Karnatka');
+
+create table customer(uniqueIdNumber bigint primary key,dateOfBirth date,emailAddress varchar(50),firstName varchar(30),lastName varchar(30),idType varchar(30),addressId int,simId int,state varchar(30)
+,constraint fk_address foreign key(addressId) references customerAddress(addressId)
+,constraint fk_uniqueno foreign key(uniqueIdNumber) references customerIdentity(uniqueIdNumber)
+,constraint fk_sim foreign key(simId) references simdetails(simId)
+);
+
+insert into customer values(1234567891234567,'1990-12-12','smith@gmail.com','smith','John','Aadhar',1,1,'Karnatka');
+insert into customer values(1234567891234568,'1998-12-12','bob@gmail.com','bob','sam','Aadhar',2,2,'Karnatka');
