@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link
+	href='https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i'
+	rel='stylesheet' type='text/css'>
+
+<meta charset="ISO-8859-1">
+<script src="../js/simhome.js"></script>
+<script>
+/**
+ * 
+ * 
+ */
+
+
+// Function to show snack bar
+function snack(str) {
+    // Get the snackbar DIV
+    var x = document.getElementById("snackbar")
+    x.innerHTML = str;
+    // Add the "show" class to DIV
+    x.className = "show";
+    // After 3 seconds, remove the show class from DIV
+    setTimeout(function() {
+        x.className = x.className.replace("show", "");
+    }, 3000);
+}
+
+// Function to activate button on basic details page
+function activateButton1(element) {
+
+    if (element.checked) {
+        document.getElementById("basicbtn").disabled = false;
+    } else {
+        document.getElementById("basicbtn").disabled = true;
+    }
+
+}
+
+// Function to activate button for terms and conditions
+function activateButton2(element) {
+
+    if (element.checked) {
+        document.getElementById("termsbtn").disabled = false;
+    } else {
+        document.getElementById("termsbtn").disabled = true;
+    }
+
+}
+
+var rootUrl = "http://localhost:8080/InfySimActivationMVC"
+var simServiceUrl = rootUrl + "/sim/validation";
+var offersUrl = rootUrl + "/sim/offer";
+var basicUrl = rootUrl + "/customer/validation";
+var idProofUrl = rootUrl + "/idproof/validation";
+var customerUrl = rootUrl + "/customer/activate"
+var activateUrl = rootUrl + "/sim/activation";
+var checkUserUrl=rootUrl + "/customer/identification";
+var checkAddressUrl=rootUrl + "/customer/addressValidation";
+
+
+$(document).ready(function() {
+    // Validating SIM and Service Details
+	// Sends the SIM and Service number
+	// Returns success or error
+	
+    $('#pg1btn').click(
+        function(event) {
+            var simnum1 = $('#simNum1').val();
+            var sernum1 = $('#servNum1').val();
+            // console.log('sim' + simnum1 + 'ser' + sernum1);
+            jsondata = {
+            		'simNumber':simnum1,
+            		'serviceNumber':sernum1
+            };
+            console.log(jsondata);
+            $.ajax({
+        		url:simServiceUrl,
+        		type:'POST',
+        		data:JSON.stringify(jsondata),
+        		contentType:"application/json",
+        		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+        		success : function(response, status, xhr) {
+        			if (response) {
+        				console.log("SUCCESS" + JSON.stringify(response));
+        				snack("validation successful. Welcome!");
+        				localStorage.setItem('simNumber', simnum1);
+        				localStorage.setItem('serviceNumber', sernum1);
+                        $('#carousel-example-generic').carousel('next');
+        			}
+        		},
+        		error : function(error) {
+        			{
+        				console.log(error.responseJSON.message);
+        				snack(error.responseJSON.message);
+        			}
+        		}
+        	});
+            $.getJSON({
+                url: offersUrl + "/" + simnum1,
+                contentType:"application/json",
+                headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+                success: function(data) {
+                    if(data) {
+                    	console.log(data);
+                    	 $("#offer").html(data.offerName + "<br/><br/>" +
+                    			 "Get " + data.callQty + " minutes calling,<br/>" + 
+                    			 data.dataQty + " MB 4G data <br/>for " + 
+                    			 data.duration + " days<br><br>" + 
+                    			 "at just Rs. " + data.cost);
+                    	 localStorage.setItem('offerId', data.offerId);
+                    	 localStorage.setItem('offerName', data.offerName);
+
+                    }
+                    else {
+                    	snack("Some unknown error occurred1");
+                    }
+                   
+                },
+                error: function(error) {
+                	alert("inside"+error.Message);
+                    snack("Some unknown error occurred2");
+                }
+            });
+
+    });
+
+    // Action on clicking offers button
+    // Carousel moves to Basic User Validation
+    $("#offbtn").click(function(event) {
+        $('#carousel-example-generic').carousel('next');
+    });
+
+    // Basic user validation button click action
+    // Verifies email and DOB
+    $("#basicbtn").click(function(event) {
+        var email1 = $('#email1').val();
+        var dob1 = $('#dob1').val();
+        console.log(email1);
+        console.log(dob1);
+        jsondata = {
+        		'emailAddress':email1,
+        		'dateOfBirth':dob1
+        };
+        $.ajax({
+    		url:basicUrl,
+    		type:'POST',
+    		data:JSON.stringify(jsondata),
+    		contentType:"application/json",
+    		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+    		success : function(response, status, xhr) {
+    			if (response) {
+    				console.log("SUCCESS" + JSON.stringify(response));
+    		        localStorage.setItem('email', email1);
+    		        localStorage.setItem('dob', dob1);
+    		        $('#dob2').val(dob1);
+    		        $('#email2').val(email1);
+                    $('#carousel-example-generic').carousel('next');
+    			}
+    		},
+    		error : function(error) {
+    			{
+    				console.log(error.responseJSON.message);
+    				snack(error.responseJSON.message);
+    			}
+    		}
+    	});
+    });
+
+    // On Personal Details page
+    $("#persbtn").click(function(event) {
+        var title1 = $('#title1').val();
+        var fname1 = $('#fname1').val();
+        var lname1 = $('#lname1').val();
+        var cemail = $('#cemail2').val();
+        
+        jsondata = {
+        		'firstName':fname1,
+        		'lastName':lname1,
+        		'emailAddress':cemail
+        };
+        
+        $.ajax({
+    		url:checkUserUrl,
+    		type:'POST',
+    		data:JSON.stringify(jsondata),
+    		contentType:"application/json",
+    		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+    		success : function(response, status, xhr) {
+    			if (response) {
+                    $('#carousel-example-generic').carousel('next');
+    			}
+    		},
+    		error : function(error) {
+    			{
+    				console.log(error.responseJSON.message);
+    				snack(error.responseJSON.message);
+    			}
+    		}
+    	});
+        
+       
+        if (localStorage.getItem('email') == cemail) {
+            localStorage.setItem('title1', title1);
+            localStorage.setItem('lname', lname1);
+            localStorage.setItem('fname', fname1);
+        	//$('#carousel-example-generic').carousel('next');
+        }
+        else {
+        	snack("Please check the details entered again.")
+        }
+    });
+
+    
+	 $('#pin11').change(function(event) { 
+		 	pin1 = $("#pin11").val(); 
+		 	url1 = "http://maps.googleapis.com/maps/api/geocode/json?address="+pin1+"&region=in"; 
+		 	console.log(url1);
+		 	$.getJSON({
+		 		url : url1, 
+			 	success : function(data) { 
+			 		alert("change event")
+			 		console.log(data);
+			 		data1 = data;
+			 		po = data1['results'][0]['address_components'];
+			 		var city = po[1]['long_name'];
+			 		var state = po[3]['long_name'];
+			 		localStorage.setItem('state', state);
+			 		console.log(city + state); 
+			 		// document.getElementById('title1').value = state;
+			 		$("#state1 option[value='"+state+"']").prop('selected', 'selected');
+
+			 		$("#city1").val(city); 
+			 		
+		 		}, 
+		 		error : function(error) {
+			 		alert("change event error")
+		 			console.log('error in getting pin code data')
+ 				}
+	 		});
+	 	});
+	 
+
+    // Action on clicking Address Details page button
+    $("#addrbtn").click(function(event) {
+        add1 = $("#add1").val();
+        state1 = $("#state1").val();
+        city1 = $("#city1").val();
+        pin1 = $("#pin11").val();
+        jsondata = {
+        		'address':add1,
+        		'city':city1,
+        		'pincode':pin1,
+        		'state':state1
+        };
+        
+        localStorage.setItem('address', (add1));
+        localStorage.setItem('city', (city1));
+        localStorage.setItem('pin', (pin1));
+        localStorage.setItem('state', (state1));
+        
+        
+        $.ajax({
+    		url:checkAddressUrl,
+    		type:'POST',
+    		data:JSON.stringify(jsondata),
+    		contentType:"application/json",
+    		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+    		success : function(response, status, xhr) {
+    			if (response) {
+                    $('#carousel-example-generic').carousel('next');
+    			}
+    		},
+    		error : function(error) {
+    			{
+    				alert("inside error")
+    				console.log(error.responseJSON.message);
+    				snack(error.responseJSON.message);
+    			}
+    		}
+    	});
+        
+ 		$("#state2 option[value="+state1+"]").prop('selected', 'selected');
+ /*       $("#fname2").val(localStorage.getItem('fname'));
+        $("#lname2").val(localStorage.getItem('lname'));*/
+        $("#dob3").val(localStorage.getItem('dob'));
+        $("#ffname").html(localStorage.getItem('fname2'));
+        $("#flname").html(localStorage.getItem('lname2'));
+        $("#femail").html(localStorage.getItem('email'));
+        $("#fdob").html(localStorage.getItem('dob'));
+        $("#foffer").html(localStorage.getItem('offerName'));
+        $("#fservice").html(localStorage.getItem('serviceNumber'));
+    });
+
+
+    $("#idbtn").click(function(event) {
+        state1 = $("#state2").val();
+        idn = $("#idn1").val();
+        fname2 = $("#fname2").val();
+        lname2 = $("#lname2").val();
+        idtype = $("#id1").val();
+        dob = $("#dob3").val();
+
+        localStorage.setItem('state1', (state1));
+        localStorage.setItem('idn', (idn));
+        localStorage.setItem('fname2', (fname2));
+        localStorage.setItem('lname2', (lname2));
+	        jsondata = {
+	        		'idType':idtype,
+	        		'uniqueIdNumber':idn,
+	        		'firstName':fname2,
+	        		'lastName':lname2,
+	        		'state':state1,
+	        		'dateOfBirth':dob
+	        }
+	        console.log("data" + JSON.stringify(jsondata));
+			$.ajax({
+	    		url:idProofUrl,
+	    		type:'POST',
+	    		data:JSON.stringify(jsondata),
+	    		contentType:"application/json",
+	    		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+	    		success : function(response, status, xhr) {
+	    		
+	    			if (response) {
+	    				console.log("SUCCESS" + JSON.stringify(response));
+	    		        $('#dob2').val(dob1);
+	    		        $('#ffname').val(fname2);
+	    		        $('#flname').val(lname2);
+	                    $('#carousel-example-generic').carousel('next');
+	    			}
+	    		},
+	    		error : function(error) {
+	    			{
+	    				console.log("FAILURE" + JSON.stringify(error));
+	    				snack(error.responseJSON.message);
+	    			}
+	    		}
+	    	});
+
+    });
+
+    $("#termsbtn").click(function(event) {
+        jsondata = {
+        		'firstName':localStorage.getItem('fname'),
+        		'lastName':localStorage.getItem('lname'),
+        		'email':localStorage.getItem('email'),
+        		'dob':localStorage.getItem('dob'),
+        		'simNumber': localStorage.getItem('simNumber')
+        };
+        console.log(jsondata);
+        $.ajax({
+    		url:activateUrl,
+    		type:'POST',
+    		data:JSON.stringify(jsondata),
+    		contentType:"application/json",
+    		headers:{contentType:"application/x-www-form-urlencoded;charset=UTF-8"},
+    		success : function(response, status, xhr) {
+    			if (response) {
+    				console.log("SUCCESS" + JSON.stringify(response));
+    				
+    			}
+    			$('#carousel-example-generic').carousel('next');
+    		},
+    		error : function(error) {
+    			{
+    				console.log(error.responseJSON.message);
+    				snack(error.responseJSON.message);
+    			}
+    		}
+    	});
+
+    });
+
+
+});
+</script>
+
+<link rel="stylesheet" href="WebContent/resources/css/sim_custom.css">
+<style>
+#snackbar {
+	visibility: hidden; /* Hidden by default. Visible on click */
+	min-width: 250px; /* Set a default minimum width */
+	margin-left: -125px; /* Divide value of min-width by 2 */
+	background-color: #ff0000; /* Black background color */
+	color: #fff; /* White text color */
+	text-align: center; /* Centered text */
+	border-radius: 2px; /* Rounded borders */
+	padding: 16px; /* Padding */
+	position: fixed; /* Sit on top of the screen */
+	z-index: 1; /* Add a z-index if needed */
+	left: 50%; /* Center the snackbar */
+	bottom: 30px; /* 30px from the bottom */
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+#snackbar.show {
+	visibility: visible; /* Show the snackbar */
+	/* Add animation: Take 0.5 seconds to fade in and out the snackbar. 
+However, delay the fade out process for 2.5 seconds */
+	-webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+	animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@
+-webkit-keyframes fadein {
+	from {bottom: 0;
+	opacity: 0;
+}
+
+to {
+	bottom: 30px;
+	opacity: 1;
+}
+
+}
+@
+keyframes fadein {
+	from {bottom: 0;
+	opacity: 0;
+}
+
+to {
+	bottom: 30px;
+	opacity: 1;
+}
+
+}
+@
+-webkit-keyframes fadeout {
+	from {bottom: 30px;
+	opacity: 1;
+}
+
+to {
+	bottom: 0;
+	opacity: 0;
+}
+
+}
+@
+keyframes fadeout {
+	from {bottom: 30px;
+	opacity: 1;
+}
+
+to {
+	bottom: 0;
+	opacity: 0;
+}
+
+}
+body {
+	font-family: 'Product Sans', Arial, sans-serif;
+	padding-top: 70px;
+}
+
+h6 {
+	padding-left: 60px;
+}
+
+.navbar-header, .navbar-collapse, .navbar-brand {
+	background-color: black;
+}
+
+h1 {
+	color: blue;
+}
+
+.carousel-indicators li {
+	background-color: #337ab7;
+}
+
+.carousel-indicators .active {
+	background-color: blue;
+}
+
+.carousel-indicators {
+	bottom: -50px;
+}
+
+.carousel-inner {
+	padding: 20px;
+	margin-bottom: 50px;
+	box-shadow: 10px 10px 5px #888888;
+}
+
+h2 {
+	color: #337ab7;
+}
+
+.btn-danger {
+	background-color: #337ab7;
+	width: 100%;
+}
+
+.carousel {
+	padding: 10px;
+	interval: false;
+}
+
+.carousel-inner {
+	border: 1px solid grey;
+	border-radius: 5px;
+	border-padding: 10px 10px 10px 10px;
+}
+
+#contid {
+	background-color: black;
+}
+
+#cont2 {
+	background-color: black;
+}
+
+.icon-bar {
+	background-color: #337ab7;
+}
+</style>
+
+<title>InfyTel</title>
+</head>
+<body>
+
+	<div id="snackbar">Error</div>
+
+	<header id="header">
+		<nav class="navbar navbar-light bg-faded navbar-fixed-top">
+
+			<div class="container-fluid" id="cont2">
+				<b>
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle collapsed"
+							data-toggle="collapse" data-target="#st-navbar-collapse">
+							<span class="sr-only">Toggle navigation</span> <span
+								class="icon-bar"></span> <span class="icon-bar"></span> <span
+								class="icon-bar"></span>
+						</button>
+						<!-- a class="logo1" style="background-color: white" href="ARS.html"><img
+						src="travel/logo.PNG" alt=""></a-->
+						<a class="navbar-brand" href="">InfyTel</a>
+					</div>
+					<div class="collapse navbar-collapse" id="st-navbar-collapse">
+						<div class="">
+							<ul class="nav navbar-nav navbar-right">
+
+								<li><a href="">Home</a></li>
+								<li><a href="#">Shop</a></li>
+								<li><a href="#">Prepaid Plans</a></li>
+								<li><a href="#">Find a Retailer</a></li>
+
+								<li class="dropdown"><a href="#" class="dropdown-toggle"
+									data-toggle="dropdown" role="button" aria-haspopup="true"
+									aria-expanded="false">More<span class="caret"></span></a>
+									<ul class="dropdown-menu">
+										<li><a href="#">Special Offers</a></li>
+									</ul></li>
+								<li><a href="#contact" id="contid">Help</a></li>
+
+							</ul>
+						</div>
+
+					</div>
+				</b>
+			</div>
+			<!-- /.navbar-collapse -->
+
+		</nav>
+
+		<div class="container-fluid">
+			<div class="row" style="color: white; background-color: #337ab7;">
+				<h6 id='redhd'>Creating new user</h6>
+			</div>
+			<div class="row">
+				<div class="col-sm-5" style="border: 1px">
+					<h1>Welcome to InfyTel</h1>
+					<h4>India's Favourite Network.</h4>
+					<h5>InfyTel is the first company to have an automated online
+						verification process. Follow the steps to continue and activate
+						your SIM.</h5>
+					<br> <br>
+					<h5>Explore our special offers for new users to get more
+						benefits at lower costs.</h5>
+					<br> <br>
+					<!-- h5>
+						Tip for testing:<br> Use SIM Number : 9999999999999 Service
+						Number : 9999999999 Email ID : a@b.c DOB : 12-12-1990 First Name :
+						Mihir Last Name : Khandekar Aadhaar ID : 12345
+					</h5-->
+				</div>
+				<div class="col-sm-7">
+					<div id="carousel-example-generic" class="carousel slide"
+						data-ride="carousel" data-interval="false">
+						<!-- Indicators -->
+						<ol class="carousel-indicators">
+							<li data-target="#carousel-example-generic" class="active"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+							<li data-target="#carousel-example-generic"></li>
+
+						</ol>
+
+						<!-- Wrapper for slides -->
+						<div class="carousel-inner" role="listbox">
+							<div class="item active">
+								<h1>Thank you for purchasing a InfyTel SIM card.</h1>
+								<h2>Let's get connected.</h2>
+
+								<br>
+								<h3>Please keep your SIM kit and identification documents
+									ready.</h3>
+								<button type="button" class="btn btn-danger"
+									onclick=" $('#carousel-example-generic').carousel('next');">Get
+									Connected</button>
+
+							</div>
+
+							<div class="item">
+								<h1>Your service details</h1>
+								<form action="javascript:void(0);">
+									<div class="form-group">
+										<label for="simNum1">SIM Number</label> <input type="text"
+											value="" class="form-control" id="simNum1"
+											placeholder="SIM Number">
+											<!-- required pattern="[0-9]{13}" -->
+									</div>
+									<div class="form-group">
+										<label for="servNum1">Service Number</label> <input value=""
+											type="text" class="form-control" id="servNum1"
+											placeholder="Service Number" >
+											<!-- required pattern="[0-9]{10}" -->
+									</div>
+
+									<button type="submit" id="pg1btn" class="btn btn-danger">Next</button>
+								</form>
+							</div>
+
+							<div class="item">
+								<h1>Your offer details</h1>
+								<h2>Special offer</h2>
+								<h4 id="offer">No offers available currently</h4>
+								<button type="button" class="btn btn-danger" id="offbtn">Next</button>
+
+							</div>
+
+							<div class="item">
+								<h1>Basic User Validation</h1>
+								<form action="javascript:void(0);">
+									<div class="form-group">
+										<label for="email1">Email</label> <input type="email"
+											class="form-control" id="email1" placeholder="email ID"
+											required>
+									</div>
+									<div class="form-group">
+										<label for="dob1">Date of Birth</label> <input type="date"
+											class="form-control" id="dob1" placeholder="Date of Birth"
+											required>
+									</div>
+									<div class="form-group">
+										<label for="terms1"></label> <input type="checkbox"
+											name="terms" id="terms1" onchange="activateButton1(this)">
+										The information provided by me is true to my belief.
+
+									</div>
+
+
+									<button id="basicbtn" type="submit" class="btn btn-danger"
+										disabled>Next</button>
+								</form>
+							</div>
+							<div class="item">
+								<h1>Customer Personal Details</h1>
+								<form action="javascript:void(0);">
+									<div class="form-group">
+										<label for="title1">Title</label> <select class="form-control"
+											id="title1">
+											<option>Mr.</option>
+											<option>Mrs.</option>
+											<option>Ms.</option>
+											<option>Dr.</option>
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="fname1">First Name</label> <input type="text"
+											class="form-control" id="fname1" placeholder="First Name"
+											required>
+									</div>
+									<div class="form-group">
+										<label for="lname1">Last Name</label> <input type="text"
+											class="form-control" id="lname1" placeholder="Last Name"
+											required>
+									</div>
+									<div class="form-group">
+										<label for="email2">Email</label> <input type="email"
+											class="form-control" id="email2" placeholder="email ID"
+											value="abc@def.com" readonly required>
+									</div>
+									<div class="form-group">
+										<label for="dob2">Date of Birth</label> <input type="date"
+											class="form-control" id="dob2" placeholder="Date of Birth"
+											value="2017-12-12" readonly required>
+									</div>
+									<div class="form-group">
+										<label for="cfemail2">Confirm Email</label> <input
+											type="email" class="form-control" id="cemail2"
+											placeholder="Confirm email ID" value="" required>
+									</div>
+
+									<button id="persbtn" type="submit" class="btn btn-danger">Next</button>
+								</form>
+							</div>
+							<div class="item">
+								<h1>Customer Address Details</h1>
+								<form action="javascript:void(0);">
+									<div class="form-group">
+										<label for="add1">Address</label> <input type="text" rows="5"
+											class="form-control" id="add1" placeholder="Address"
+											pattern="{0,125}" required>
+									</div>
+									<div class="form-group">
+										<label for="pin1">Pin code</label> <input type="number"
+											pattern="[0-9]{6}" class="form-control" id="pin11"
+											placeholder="Pin Code" required>
+									</div>
+
+									<div class="form-group">
+										<label for="state1">State</label> <select class="form-control"
+											id="state1">
+											<option value="Andaman and Nicobar Islands">Andaman
+												and Nicobar Islands</option>
+											<option value="Andhra Pradesh">Andhra Pradesh</option>
+											<option value="Arunachal Pradesh">Arunachal Pradesh</option>
+											<option value="Assam">Assam</option>
+											<option value="Bihar">Bihar</option>
+											<option value="Chandigarh">Chandigarh</option>
+											<option value="Chhattisgarh">Chhattisgarh</option>
+											<option value="Dadra and Nagar Haveli">Dadra and
+												Nagar Haveli</option>
+											<option value="Daman and Diu">Daman and Diu</option>
+											<option value="Delhi">Delhi</option>
+											<option value="Goa">Goa</option>
+											<option value="Gujarat">Gujarat</option>
+											<option value="Haryana">Haryana</option>
+											<option value="Himachal Pradesh">Himachal Pradesh</option>
+											<option value="Jammu and Kashmir">Jammu and Kashmir</option>
+											<option value="Jharkhand">Jharkhand</option>
+											<option value="Karnataka">Karnataka</option>
+											<option value="Kerala">Kerala</option>
+											<option value="Lakshadweep">Lakshadweep</option>
+											<option value="Madhya Pradesh">Madhya Pradesh</option>
+											<option value="Maharashtra">Maharashtra</option>
+											<option value="Manipur">Manipur</option>
+											<option value="Meghalaya">Meghalaya</option>
+											<option value="Mizoram">Mizoram</option>
+											<option value="Nagaland">Nagaland</option>
+											<option value="Orissa">Orissa</option>
+											<option value="Pondicherry">Pondicherry</option>
+											<option value="Punjab">Punjab</option>
+											<option value="Rajasthan">Rajasthan</option>
+											<option value="Sikkim">Sikkim</option>
+											<option value="Tamil Nadu">Tamil Nadu</option>
+											<option value="Tripura">Tripura</option>
+											<option value="Uttaranchal">Uttaranchal</option>
+											<option value="Uttar Pradesh">Uttar Pradesh</option>
+											<option value="West Bengal">West Bengal</option>
+
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="city1">City</label> <input type="text"
+											class="form-control" id="city1" placeholder="City" required>
+									</div>
+
+									<button id="addrbtn" type="submit" class="btn btn-danger">Next</button>
+								</form>
+							</div>
+							<div class="item">
+								<h1>ID Proof Validation</h1>
+								<form action="javascript:void(0);">
+									<div class="form-group">
+										<label for="id1">ID Type</label> <input type="text"
+											class="form-control" id="id1" placeholder="ID"
+											value="Aadhaar" required readonly>
+									</div>
+									<div class="form-group">
+										<label for="state2">State</label><select class="form-control"
+											id="state2">
+											<option value="Andaman and Nicobar Islands">Andaman
+												and Nicobar Islands</option>
+											<option value="Andhra Pradesh">Andhra Pradesh</option>
+											<option value="Arunachal Pradesh">Arunachal Pradesh</option>
+											<option value="Assam">Assam</option>
+											<option value="Bihar">Bihar</option>
+											<option value="Chandigarh">Chandigarh</option>
+											<option value="Chhattisgarh">Chhattisgarh</option>
+											<option value="Dadra and Nagar Haveli">Dadra and
+												Nagar Haveli</option>
+											<option value="Daman and Diu">Daman and Diu</option>
+											<option value="Delhi">Delhi</option>
+											<option value="Goa">Goa</option>
+											<option value="Gujarat">Gujarat</option>
+											<option value="Haryana">Haryana</option>
+											<option value="Himachal Pradesh">Himachal Pradesh</option>
+											<option value="Jammu and Kashmir">Jammu and Kashmir</option>
+											<option value="Jharkhand">Jharkhand</option>
+											<option value="Karnataka">Karnataka</option>
+											<option value="Kerala">Kerala</option>
+											<option value="Lakshadweep">Lakshadweep</option>
+											<option value="Madhya Pradesh">Madhya Pradesh</option>
+											<option value="Maharashtra">Maharashtra</option>
+											<option value="Manipur">Manipur</option>
+											<option value="Meghalaya">Meghalaya</option>
+											<option value="Mizoram">Mizoram</option>
+											<option value="Nagaland">Nagaland</option>
+											<option value="Orissa">Orissa</option>
+											<option value="Pondicherry">Pondicherry</option>
+											<option value="Punjab">Punjab</option>
+											<option value="Rajasthan">Rajasthan</option>
+											<option value="Sikkim">Sikkim</option>
+											<option value="Tamil Nadu">Tamil Nadu</option>
+											<option value="Tripura">Tripura</option>
+											<option value="Uttaranchal">Uttaranchal</option>
+											<option value="Uttar Pradesh">Uttar Pradesh</option>
+											<option value="West Bengal">West Bengal</option>
+
+										</select>
+									</div>
+									<div class="form-group">
+										<label for="idn1">ID Number</label> <input type="text"
+											class="form-control" id="idn1" placeholder="ID" required>
+									</div>
+
+									<div class="form-group">
+										<label for="fname2">First Name</label> <input type="text"
+											class="form-control" id="fname2" placeholder="First Name"
+											required>
+									</div>
+
+									<div class="form-group">
+										<label for="lname2">Last Name</label> <input type="text"
+											class="form-control" id="lname2" placeholder="Last Name"
+											required>
+									</div>
+									<div class="form-group">
+										<label for="dob3">Date of Birth</label> <input type="date"
+											class="form-control" id="dob3" placeholder="Date of Birth"
+											value="1990-12-12" required>
+									</div>
+									<button id="idbtn" type="submit" class="btn btn-danger">Next</button>
+								</form>
+							</div>
+							<div class="item">
+								<h1>Success</h1>
+								<h2></h2>
+								<h4 id="act1">Confirmation</h4>
+								<div class="table-responsive">
+									<table class="table table-condensed">
+										<tbody>
+											<tr>
+												<td>First Name</td>
+												<td id="ffname">Doe</td>
+											</tr>
+											<tr>
+												<td>Last Name</td>
+												<td id="flname">Moe</td>
+											</tr>
+											<tr>
+												<td>Email</td>
+												<td id="femail">a@b.c</td>
+											</tr>
+											<tr>
+												<td>Date of Birth</td>
+												<td id="fdob"></td>
+											</tr>
+											<tr>
+												<td>Offer</td>
+												<td id="foffer"></td>
+											</tr>
+											<tr>
+												<td>Service Number</td>
+												<td id="fservice"></td>
+											</tr>
+
+										</tbody>
+									</table>
+								</div>
+								<label for="terms2"></label> <input type="checkbox" name="terms"
+									id="terms2" onchange="activateButton2(this)"> I agree
+								to the terms and conditions.
+
+								<button id="termsbtn" type="button" class="btn btn-danger"
+									disabled>Next</button>
+							</div>
+
+							<div class="item">
+								<h1>Thank you for purchasing a InfyTel SIM card.</h1>
+								<br>
+								<h3>We will be in touch with you. Your SIM will be
+									activated in the next 2 hours.</h3>
+
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+	</header>
+
+</body>
+</html>
